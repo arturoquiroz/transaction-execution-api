@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: transaction-execution-api
+  threads:
+    virtual:
+      enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
