@@ -19,6 +19,7 @@
     <properties>
         <java.version>25</java.version>
         <jacoco.version>0.8.15</jacoco.version>
+        <java-uuid-generator.version>5.2.0</java-uuid-generator.version>
     </properties>
 
     <dependencies>
@@ -33,6 +34,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.uuid</groupId>
+            <artifactId>java-uuid-generator</artifactId>
+            <version>${java-uuid-generator.version}</version>
         </dependency>
 
         <dependency>
