@@ -10,3 +10,9 @@ management:
     web:
       exposure:
         include: health
+
+transactions:
+  rules:
+    minimum-amount: 1.00
+    debit-max-amount: 10000.00
+    supported-currencies: [MXN]
