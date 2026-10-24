@@ -5,6 +5,7 @@ import com.aquiroz.transactions.domain.rule.MinimumAmountRule;
 import com.aquiroz.transactions.domain.rule.SupportedCurrencyRule;
 import com.aquiroz.transactions.domain.rule.TransactionPolicy;
 import java.time.Clock;
+import java.time.ZoneOffset;
 import java.util.List;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -16,7 +17,7 @@ public class DomainConfig {
 
     @Bean
     public Clock clock() {
-        return Clock.systemUTC();
+        return Clock.tickMillis(ZoneOffset.UTC);
     }
 
     @Bean

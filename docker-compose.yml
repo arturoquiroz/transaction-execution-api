@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: transactions
+      POSTGRES_USER: transactions
+      POSTGRES_PASSWORD: transactions
+    ports:
+      - "5432:5432"
+    volumes:
+      # PostgreSQL 18 images keep data under /var/lib/postgresql/<version>, so the volume mounts the parent
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U transactions -d transactions"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:
