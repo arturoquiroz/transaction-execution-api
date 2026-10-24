@@ -24,5 +24,27 @@ services:
     volumes:
       - ./wiremock/mappings:/home/wiremock/mappings:ro
 
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/transactions
+      DB_USER: transactions
+      DB_PASSWORD: transactions
+      PROVIDER_URL: http://wiremock:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      wiremock:
+        condition: service_healthy
+    healthcheck:
+      # The JRE image has no curl; bash can send the HTTP request through /dev/tcp
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /actuator/health HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+      interval: 10s
+      timeout: 3s
+      start_period: 30s
+      retries: 5
+
 volumes:
   postgres-data:

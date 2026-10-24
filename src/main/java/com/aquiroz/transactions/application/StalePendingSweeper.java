@@ -25,9 +25,13 @@ public class StalePendingSweeper {
 
     public int sweep() {
         var now = clock.instant();
-        int moved = repository.markStalePendingAsUnknown(now.minus(staleAfter), now);
+        var cutoff = now.minus(staleAfter);
+        int moved = repository.markStalePendingAsUnknown(cutoff, now);
         if (moved > 0) {
-            log.warn("Moved {} stale PENDING transaction(s) to UNKNOWN; they need reconciliation", moved);
+            log.warn("Stale PENDING sweep moved {} transaction(s) created before {} to UNKNOWN; they need "
+                    + "reconciliation", moved, cutoff);
+        } else {
+            log.info("Stale PENDING sweep ran: no transaction created before {} was still PENDING", cutoff);
         }
         return moved;
     }
