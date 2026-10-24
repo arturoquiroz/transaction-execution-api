@@ -16,5 +16,13 @@ services:
       timeout: 3s
       retries: 10
 
+  # Provider mock: scenarios are chosen by accountId
+  wiremock:
+    image: wiremock/wiremock:3.13.2
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./wiremock/mappings:/home/wiremock/mappings:ro
+
 volumes:
   postgres-data:
