@@ -1,0 +1,98 @@
+package com.aquiroz.transactions.application;
+
+import com.aquiroz.transactions.domain.model.Transaction;
+import com.aquiroz.transactions.domain.model.TransactionStatus;
+import com.aquiroz.transactions.domain.port.DuplicateIdempotencyKeyException;
+import com.aquiroz.transactions.domain.port.ExecutionProvider;
+import com.aquiroz.transactions.domain.port.ProviderOutcome;
+import com.aquiroz.transactions.domain.port.ProviderOutcome.Approved;
+import com.aquiroz.transactions.domain.port.ProviderOutcome.NotExecuted;
+import com.aquiroz.transactions.domain.port.ProviderOutcome.Rejected;
+import com.aquiroz.transactions.domain.port.ProviderOutcome.Uncertain;
+import com.aquiroz.transactions.domain.port.TransactionIdGenerator;
+import com.aquiroz.transactions.domain.port.TransactionRepository;
+import com.aquiroz.transactions.domain.rule.TransactionPolicy;
+import java.time.Clock;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+@Slf4j
+@RequiredArgsConstructor
+@Service
+public class ExecuteTransactionService {
+
+    private final TransactionRepository repository;
+    private final ExecutionProvider provider;
+    private final TransactionPolicy policy;
+    private final TransactionIdGenerator idGenerator;
+    private final Clock clock;
+
+    public ExecutionResult execute(ExecuteTransactionCommand command) {
+        var request = command.request();
+        var key = command.idempotencyKey();
+        var hash = RequestHasher.hash(request);
+
+        var existing = repository.findByIdempotencyKey(key);
+        if (existing.isPresent()) {
+            return replayOrConflict(existing.get(), hash);
+        }
+
+        policy.enforce(request);
+
+        var transaction = Transaction.pending(request, key, hash, idGenerator.nextId(), clock);
+        try {
+            repository.insert(transaction);
+        } catch (DuplicateIdempotencyKeyException _) {
+            return replayOrConflict(repository.findByIdempotencyKey(key).orElseThrow(), hash);
+        }
+        log.info("Transaction {} registered as PENDING: account={} type={} amount={} {}", transaction.id(),
+                request.accountId(), request.type(), request.amount(), request.currency());
+
+        applyOutcome(transaction, provider.execute(request));
+
+        if (!saveOutcome(transaction)) {
+            log.warn("Transaction {} left PENDING before its outcome was saved: status={}, providerTransactionId={}, "
+                            + "failureCode={}; returning stored state",
+                    transaction.id(), transaction.status(), transaction.providerTransactionId(),
+                    transaction.failureCode());
+            return new ExecutionResult(repository.findById(transaction.id()).orElseThrow(), false);
+        }
+        log.info("Transaction {} finished: status={} failureCode={} providerTransactionId={}", transaction.id(),
+                transaction.status(), transaction.failureCode(), transaction.providerTransactionId());
+        return new ExecutionResult(transaction, false);
+    }
+
+    private boolean saveOutcome(Transaction transaction) {
+        try {
+            return repository.updateFromPending(transaction);
+        } catch (RuntimeException e) {
+            log.error("Transaction {} outcome could not be saved and needs reconciliation: status={} "
+                            + "providerTransactionId={} balanceAfter={} failureCode={}",
+                    transaction.id(), transaction.status(), transaction.providerTransactionId(),
+                    transaction.balanceAfter(), transaction.failureCode(), e);
+            throw e;
+        }
+    }
+
+    private ExecutionResult replayOrConflict(Transaction existing, String hash) {
+        if (!existing.requestHash().equals(hash)) {
+            throw new IdempotencyKeyReusedException(existing.idempotencyKey());
+        }
+        if (existing.status() == TransactionStatus.PENDING) {
+            throw new RequestInProgressException(existing.idempotencyKey());
+        }
+        log.info("Transaction {} replayed for a repeated request: status={}", existing.id(), existing.status());
+        return new ExecutionResult(existing, true);
+    }
+
+    private void applyOutcome(Transaction transaction, ProviderOutcome outcome) {
+        switch (outcome) {
+            case Approved(var providerTransactionId, var balance, var executedAt) ->
+                    transaction.markExecuted(providerTransactionId, balance, executedAt, clock);
+            case Rejected(var code, var message) -> transaction.markRejected(code, message, clock);
+            case NotExecuted(var reason) -> transaction.markFailed(reason, clock);
+            case Uncertain(var reason) -> transaction.markUnknown(reason, clock);
+        }
+    }
+}

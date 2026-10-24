@@ -4,9 +4,61 @@ spring:
   threads:
     virtual:
       enabled: true
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/transactions}
+    username: ${DB_USER:transactions}
+    password: ${DB_PASSWORD:transactions}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:20}
 
 management:
   endpoints:
     web:
       exposure:
         include: health
+  tracing:
+    sampling:
+      probability: 1.0
+    export:
+      otlp:
+        enabled: ${TRACING_OTLP_EXPORT_ENABLED:false}
+  otlp:
+    metrics:
+      export:
+        enabled: false
+  logging:
+    export:
+      otlp:
+        enabled: false
+
+transactions:
+  rules:
+    minimum-amount: 1.00
+    debit-max-amount: 10000.00
+    supported-currencies: [MXN]
+  sweeper:
+    enabled: true
+    interval: 60s
+    stale-after: 5m
+
+provider:
+  base-url: ${PROVIDER_URL:http://localhost:8081}
+  connect-timeout: 1s
+  read-timeout: 3s
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      provider:
+        sliding-window-size: 50
+        minimum-number-of-calls: 20
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 5
+  retry:
+    instances:
+      provider:
+        max-attempts: 2
+        wait-duration: 100ms
+        retry-exceptions:
+          - com.aquiroz.transactions.adapter.out.provider.ProviderUnreachableException

@@ -1,0 +1,135 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-transactions-table
+      author: aquiroz
+      changes:
+        - createTable:
+            tableName: transactions
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_transactions
+              - column:
+                  name: idempotency_key
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_transactions_idempotency_key
+              - column:
+                  name: request_hash
+                  type: char(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: account_id
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: numeric(19, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: currency
+                  type: char(3)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: varchar(255)
+              - column:
+                  name: status
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: provider_transaction_id
+                  type: varchar(100)
+              - column:
+                  name: balance_after
+                  type: numeric(19, 2)
+              - column:
+                  name: failure_code
+                  type: varchar(50)
+              - column:
+                  name: failure_message
+                  type: varchar(500)
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: executed_at
+                  type: timestamp with time zone
+
+  - changeSet:
+      id: 001-create-transactions-indexes
+      author: aquiroz
+      changes:
+        - createIndex:
+            tableName: transactions
+            indexName: idx_tx_account_created
+            columns:
+              - column:
+                  name: account_id
+              - column:
+                  name: created_at
+                  descending: true
+              - column:
+                  name: id
+                  descending: true
+        - createIndex:
+            tableName: transactions
+            indexName: idx_tx_status_created
+            columns:
+              - column:
+                  name: status
+              - column:
+                  name: created_at
+                  descending: true
+        - createIndex:
+            tableName: transactions
+            indexName: idx_tx_created
+            columns:
+              - column:
+                  name: created_at
+                  descending: true
+              - column:
+                  name: id
+                  descending: true
+
+  # addCheckConstraint is Liquibase Pro only, so the CHECKs are native SQL (ADR D4)
+  - changeSet:
+      id: 001-create-transactions-checks
+      author: aquiroz
+      changes:
+        - sql:
+            sql: >
+              ALTER TABLE transactions
+                ADD CONSTRAINT ck_transactions_type CHECK (type IN ('CREDIT', 'DEBIT')),
+                ADD CONSTRAINT ck_transactions_amount CHECK (amount > 0),
+                ADD CONSTRAINT ck_transactions_status
+                  CHECK (status IN ('PENDING', 'EXECUTED', 'REJECTED', 'FAILED', 'UNKNOWN'));
+      rollback:
+        - sql:
+            sql: >
+              ALTER TABLE transactions
+                DROP CONSTRAINT ck_transactions_type,
+                DROP CONSTRAINT ck_transactions_amount,
+                DROP CONSTRAINT ck_transactions_status;

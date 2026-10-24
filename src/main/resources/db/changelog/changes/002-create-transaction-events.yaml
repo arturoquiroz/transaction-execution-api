@@ -1,0 +1,71 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-create-transaction-events-table
+      author: aquiroz
+      changes:
+        - createTable:
+            tableName: transaction_events
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_transaction_events
+              - column:
+                  name: transaction_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_transaction_events_transaction
+                    references: transactions(id)
+              - column:
+                  name: from_status
+                  type: varchar(20)
+              - column:
+                  name: to_status
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: failure_code
+                  type: varchar(50)
+              - column:
+                  name: changed_by
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: occurred_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: transaction_events
+            indexName: idx_tx_events_transaction
+            columns:
+              - column:
+                  name: transaction_id
+              - column:
+                  name: id
+
+  - changeSet:
+      id: 002-create-transaction-events-checks
+      author: aquiroz
+      changes:
+        - sql:
+            sql: >
+              ALTER TABLE transaction_events
+                ADD CONSTRAINT ck_tx_events_from_status
+                  CHECK (from_status IS NULL OR from_status IN ('PENDING', 'EXECUTED', 'REJECTED', 'FAILED', 'UNKNOWN')),
+                ADD CONSTRAINT ck_tx_events_to_status
+                  CHECK (to_status IN ('PENDING', 'EXECUTED', 'REJECTED', 'FAILED', 'UNKNOWN')),
+                ADD CONSTRAINT ck_tx_events_changed_by CHECK (changed_by IN ('API', 'SWEEPER'));
+      rollback:
+        - sql:
+            sql: >
+              ALTER TABLE transaction_events
+                DROP CONSTRAINT ck_tx_events_from_status,
+                DROP CONSTRAINT ck_tx_events_to_status,
+                DROP CONSTRAINT ck_tx_events_changed_by;

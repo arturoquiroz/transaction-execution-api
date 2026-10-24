@@ -1,0 +1,10 @@
+target/
+.git/
+.idea/
+*.iml
+.vscode/
+.DS_Store
+docs/
+wiremock/
+postman/
+*.md
