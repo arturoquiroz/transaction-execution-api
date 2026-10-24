@@ -9,7 +9,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.aquiroz.transactions.TestcontainersConfiguration;
+import com.aquiroz.transactions.IntegrationTest;
 import com.aquiroz.transactions.domain.model.TransactionRequest;
 import com.aquiroz.transactions.domain.model.TransactionType;
 import com.aquiroz.transactions.domain.port.ProviderOutcome.Approved;
@@ -28,13 +28,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 @SpringBootTest(webEnvironment = WebEnvironment.NONE)
-@Import(TestcontainersConfiguration.class)
+@IntegrationTest
 class HttpExecutionProviderTest {
 
     private static final String PATH = "/provider/v1/execute";

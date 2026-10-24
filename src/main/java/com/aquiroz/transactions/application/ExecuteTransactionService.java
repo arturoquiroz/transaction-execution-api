@@ -51,7 +51,7 @@ public class ExecuteTransactionService {
 
         applyOutcome(transaction, provider.execute(request));
 
-        if (!repository.updateFromPending(transaction)) {
+        if (!saveOutcome(transaction)) {
             log.warn("Transaction {} left PENDING before its outcome was saved: status={}, providerTransactionId={}, "
                             + "failureCode={}; returning stored state",
                     transaction.id(), transaction.status(), transaction.providerTransactionId(),
@@ -61,6 +61,18 @@ public class ExecuteTransactionService {
         log.info("Transaction {} finished: status={} failureCode={} providerTransactionId={}", transaction.id(),
                 transaction.status(), transaction.failureCode(), transaction.providerTransactionId());
         return new ExecutionResult(transaction, false);
+    }
+
+    private boolean saveOutcome(Transaction transaction) {
+        try {
+            return repository.updateFromPending(transaction);
+        } catch (RuntimeException e) {
+            log.error("Transaction {} outcome could not be saved and needs reconciliation: status={} "
+                            + "providerTransactionId={} balanceAfter={} failureCode={}",
+                    transaction.id(), transaction.status(), transaction.providerTransactionId(),
+                    transaction.balanceAfter(), transaction.failureCode(), e);
+            throw e;
+        }
     }
 
     private ExecutionResult replayOrConflict(Transaction existing, String hash) {
