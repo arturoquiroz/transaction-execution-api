@@ -189,6 +189,17 @@ class ExecuteTransactionServiceTest {
         assertThat(storedStatus()).isEqualTo(TransactionStatus.UNKNOWN);
     }
 
+    @Test
+    void shouldPropagateFailureToSaveOutcomeAndLeaveRowPending() {
+        provider.willReturn(new Approved("txn-789", new BigDecimal("5500.00"), PROVIDER_EXECUTED_AT));
+        repository.failNextUpdateWith(new IllegalStateException("database unreachable"));
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> service.execute(command(debit("1500.00"))))
+                .withMessage("database unreachable");
+        assertThat(storedStatus()).isEqualTo(TransactionStatus.PENDING);
+    }
+
     private TransactionStatus storedStatus() {
         return repository.findById(ID).orElseThrow().status();
     }

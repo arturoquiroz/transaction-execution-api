@@ -36,6 +36,10 @@ transactions:
     minimum-amount: 1.00
     debit-max-amount: 10000.00
     supported-currencies: [MXN]
+  sweeper:
+    enabled: true
+    interval: 60s
+    stale-after: 5m
 
 provider:
   base-url: ${PROVIDER_URL:http://localhost:8081}

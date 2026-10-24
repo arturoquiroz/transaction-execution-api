@@ -1,0 +1,6 @@
+# Loaded only with the "test" profile, which @IntegrationTest activates; values here override application.yml.
+transactions:
+  sweeper:
+    # Tests insert deliberately old PENDING rows that a background sweep would move mid-assertion.
+    # StalePendingSweeperIntegrationTest turns it back on for itself.
+    enabled: false

@@ -3,7 +3,7 @@ package com.aquiroz.transactions.adapter.out.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import com.aquiroz.transactions.TestcontainersConfiguration;
+import com.aquiroz.transactions.IntegrationTest;
 import com.aquiroz.transactions.domain.model.Transaction;
 import com.aquiroz.transactions.domain.model.TransactionRequest;
 import com.aquiroz.transactions.domain.model.TransactionStatus;
@@ -23,12 +23,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 
 @SpringBootTest(webEnvironment = WebEnvironment.NONE)
-@Import(TestcontainersConfiguration.class)
+@IntegrationTest
 class JdbcTransactionRepositoryTest {
 
     private static final Instant T0 = Instant.parse("2026-10-23T16:30:00Z");

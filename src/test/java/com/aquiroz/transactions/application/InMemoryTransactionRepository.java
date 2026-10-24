@@ -23,6 +23,7 @@ class InMemoryTransactionRepository implements TransactionRepository {
     private final Map<UUID, Transaction> rows = new LinkedHashMap<>();
     private Transaction concurrentWinner;
     private boolean sweeperWinsNextUpdate;
+    private RuntimeException nextUpdateFailure;
     private PageResult<Transaction> searchResult;
     private TransactionFilter lastFilter;
     private PageQuery lastPage;
@@ -39,6 +40,11 @@ class InMemoryTransactionRepository implements TransactionRepository {
     /** The sweeper moves the row to UNKNOWN right before the next conditional update. */
     void simulateSweeperBeforeNextUpdate() {
         this.sweeperWinsNextUpdate = true;
+    }
+
+    /** The next conditional update fails, as when the database is briefly unreachable. */
+    void failNextUpdateWith(RuntimeException failure) {
+        this.nextUpdateFailure = failure;
     }
 
     void willReturnOnSearch(PageResult<Transaction> result) {
@@ -71,6 +77,11 @@ class InMemoryTransactionRepository implements TransactionRepository {
 
     @Override
     public boolean updateFromPending(Transaction transaction) {
+        if (nextUpdateFailure != null) {
+            var failure = nextUpdateFailure;
+            nextUpdateFailure = null;
+            throw failure;
+        }
         if (sweeperWinsNextUpdate) {
             sweeperWinsNextUpdate = false;
             var stored = rows.get(transaction.id());
@@ -105,9 +116,29 @@ class InMemoryTransactionRepository implements TransactionRepository {
         return searchResult;
     }
 
+    private Instant lastSweepOlderThan;
+    private Instant lastSweepNow;
+
     @Override
     public int markStalePendingAsUnknown(Instant olderThan, Instant now) {
-        throw new UnsupportedOperationException("Covered by the sweeper slice");
+        this.lastSweepOlderThan = olderThan;
+        this.lastSweepNow = now;
+        var stale = rows.values().stream()
+                .filter(tx -> tx.status() == TransactionStatus.PENDING && tx.createdAt().isBefore(olderThan))
+                .toList();
+        stale.forEach(tx -> {
+            tx.markUnknown("stale pending", Clock.fixed(now, ZoneOffset.UTC));
+            store(tx);
+        });
+        return stale.size();
+    }
+
+    Instant lastSweepOlderThan() {
+        return lastSweepOlderThan;
+    }
+
+    Instant lastSweepNow() {
+        return lastSweepNow;
     }
 
     private static Clock fixedSweeperClock() {
