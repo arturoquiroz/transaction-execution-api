@@ -24,4 +24,22 @@ class TransactionExecutionApiApplicationTests {
                 .expectBody()
                 .jsonPath("$.status").isEqualTo("UP");
     }
+
+    @Test
+    void shouldPublishOpenApiDocumentWithTransactionEndpoints() {
+        client.get().uri("/v3/api-docs")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.info.title").isEqualTo("Transaction Execution API")
+                .jsonPath("$.paths['/transactions'].post").exists()
+                .jsonPath("$.paths['/transactions/{id}'].get").exists();
+    }
+
+    @Test
+    void shouldServeSwaggerUi() {
+        client.get().uri("/swagger-ui/index.html")
+                .exchange()
+                .expectStatus().isOk();
+    }
 }

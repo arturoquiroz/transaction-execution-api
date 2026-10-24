@@ -46,6 +46,8 @@ public class ExecuteTransactionService {
         } catch (DuplicateIdempotencyKeyException _) {
             return replayOrConflict(repository.findByIdempotencyKey(key).orElseThrow(), hash);
         }
+        log.info("Transaction {} registered as PENDING: account={} type={} amount={} {}", transaction.id(),
+                request.accountId(), request.type(), request.amount(), request.currency());
 
         applyOutcome(transaction, provider.execute(request));
 
@@ -56,6 +58,8 @@ public class ExecuteTransactionService {
                     transaction.failureCode());
             return new ExecutionResult(repository.findById(transaction.id()).orElseThrow(), false);
         }
+        log.info("Transaction {} finished: status={} failureCode={} providerTransactionId={}", transaction.id(),
+                transaction.status(), transaction.failureCode(), transaction.providerTransactionId());
         return new ExecutionResult(transaction, false);
     }
 
@@ -66,6 +70,7 @@ public class ExecuteTransactionService {
         if (existing.status() == TransactionStatus.PENDING) {
             throw new RequestInProgressException(existing.idempotencyKey());
         }
+        log.info("Transaction {} replayed for a repeated request: status={}", existing.id(), existing.status());
         return new ExecutionResult(existing, true);
     }
 
