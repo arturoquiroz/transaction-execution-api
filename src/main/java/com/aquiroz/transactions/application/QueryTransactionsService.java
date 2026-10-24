@@ -8,8 +8,10 @@ import com.aquiroz.transactions.domain.port.TransactionRepository;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
+@Service
 public class QueryTransactionsService {
 
     private final TransactionRepository repository;

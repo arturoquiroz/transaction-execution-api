@@ -10,6 +10,7 @@ public final class Transaction {
 
     public static final String PROVIDER_UNAVAILABLE = "PROVIDER_UNAVAILABLE";
     public static final String PROVIDER_OUTCOME_UNKNOWN = "PROVIDER_OUTCOME_UNKNOWN";
+    public static final String STALE_PENDING = "STALE_PENDING";
 
     private final UUID id;
     private final String idempotencyKey;
@@ -58,7 +59,6 @@ public final class Transaction {
                 balanceAfter, failureCode, failureMessage, createdAt, updatedAt, executedAt);
     }
 
-    // Arguments are checked before the transition so a bad call never leaves a half-updated transaction
     public void markExecuted(String providerTransactionId, BigDecimal balanceAfter, Instant executedAt, Clock clock) {
         Objects.requireNonNull(providerTransactionId, "providerTransactionId");
         Objects.requireNonNull(balanceAfter, "balanceAfter");

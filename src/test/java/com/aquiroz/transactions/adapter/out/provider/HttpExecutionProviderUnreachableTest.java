@@ -2,6 +2,7 @@ package com.aquiroz.transactions.adapter.out.provider;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.aquiroz.transactions.TestcontainersConfiguration;
 import com.aquiroz.transactions.domain.model.TransactionRequest;
 import com.aquiroz.transactions.domain.model.TransactionType;
 import com.aquiroz.transactions.domain.port.ProviderOutcome.NotExecuted;
@@ -13,11 +14,13 @@ import java.net.ServerSocket;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 @SpringBootTest(webEnvironment = WebEnvironment.NONE)
+@Import(TestcontainersConfiguration.class)
 class HttpExecutionProviderUnreachableTest {
 
     @DynamicPropertySource
