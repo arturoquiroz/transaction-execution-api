@@ -40,3 +40,6 @@ docs/ARCHITECTURE.md
 docs/LLD.md
 docs/AI_USAGE.md
 docs/challenge.pdf
+
+### Deploy secrets (see .env.example) ###
+.env

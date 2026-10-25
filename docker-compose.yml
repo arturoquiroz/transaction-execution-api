@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_DB: transactions
       POSTGRES_USER: transactions
-      POSTGRES_PASSWORD: transactions
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-transactions}
     ports:
       - "5432:5432"
     volumes:
@@ -31,7 +31,7 @@ services:
     environment:
       DB_URL: jdbc:postgresql://postgres:5432/transactions
       DB_USER: transactions
-      DB_PASSWORD: transactions
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-transactions}
       PROVIDER_URL: http://wiremock:8080
     depends_on:
       postgres:

@@ -1,0 +1,19 @@
+# AWS demo overrides, applied on top of docker-compose.yml (see docs/DEPLOY.md):
+#   docker compose -f docker-compose.yml -f docker-compose.aws.yml up -d --build --wait
+# !override and !reset replace the base values instead of merging lists (Docker Compose 2.24.4+).
+services:
+  api:
+    ports: !override
+      - "80:8080"
+    restart: unless-stopped
+    # The JVM sizes its heap from this limit (-XX:MaxRAMPercentage=75 in the Dockerfile)
+    mem_limit: 768m
+
+  # Database and provider mock stay inside the Docker network: nothing outside the instance reaches them
+  postgres:
+    ports: !reset []
+    restart: unless-stopped
+
+  wiremock:
+    ports: !reset []
+    restart: unless-stopped
