@@ -398,7 +398,7 @@ infraestructura; cuanto más afuera, más reales.
 |-------|-----------|------|
 | Unitarias de dominio | Cada borde de las reglas (1.00 ✗, 1.01 ✓, débito 10,000.00 ✓, 10,000.01 ✗, `mxn` ✗), todas las transiciones válidas e inválidas, montos con más de 2 decimales | JUnit y AssertJ, sin Spring |
 | Unitarias de casos de uso | Cada resultado del proveedor y su estado final, que una regla violada no guarde ni llame al proveedor, replay, llave reutilizada, petición en curso, la carrera en el INSERT, el sweeper ganándole al request, el UPDATE final fallando | Fakes en memoria de los puertos |
-| Web | El código HTTP de cada caso de ARCHITECTURE §9, el formato `ProblemDetail`, validaciones y headers | `@WebMvcTest` |
+| Web | El código HTTP de cada caso de la tabla de la sección API, el formato `ProblemDetail`, validaciones y headers | `@WebMvcTest` |
 | Proveedor | Cada fila de la tabla de clasificación: aprobado, rechazos en 4xx y 5xx, 4xx y 5xx sin cuerpo, timeout, conexión cortada, conexión rechazada con su reintento, circuito abierto | WireMock |
 | Persistencia | El esquema de Liquibase, el UNIQUE, el UPDATE condicional, filtros y paginación, el sweeper, el historial de eventos | PostgreSQL 18 real con Testcontainers |
 | End-to-end | `POST` → `Location` → `GET` con Tomcat real, base real y el mismo mock de docker compose; el sweeper corriendo de verdad sobre un PENDING huérfano | `@SpringBootTest` |
